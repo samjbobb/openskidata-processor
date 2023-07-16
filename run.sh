@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e
+set -ex
 
 MY_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 cd $MY_DIR
@@ -13,12 +13,21 @@ fi
 
 if [ -z "$CLUSTERING_ARANGODB_URL" ]; then
 		echo "Starting clustering DB..."
-    docker compose up -d
+    docker compose up -d arangodb
     CLUSTERING_ARANGODB_URL="http://$(docker compose port arangodb 8529)"
+    sleep 5
+fi
+
+if [ -z "$ELEVATION_SERVER_URL" ]; then
+		echo "Starting elevation service..."
+    docker compose up -d elevation-service
+    ELEVATION_SERVER_URL="http://$(docker compose port elevation-service 3000)"
+    sleep 5
 fi
 
 echo "Converting to GeoJSON..."
-GEOCODING_SERVER_URL="https://photon.komoot.io/reverse" CLUSTERING_ARANGODB_URL=$CLUSTERING_ARANGODB_URL npm run prepare-geojson
+#GEOCODING_SERVER_URL="https://photon.komoot.io/reverse" CLUSTERING_ARANGODB_URL=$CLUSTERING_ARANGODB_URL npm run prepare-geojson
+CLUSTERING_ARANGODB_URL=$CLUSTERING_ARANGODB_URL ELEVATION_SERVER_URL=$ELEVATION_SERVER_URL npm run prepare-geojson
 
 docker compose run tippecanoe \
   tippecanoe -Q -o /data/planet_lifts.mbtiles \

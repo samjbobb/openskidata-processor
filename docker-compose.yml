@@ -1,14 +1,23 @@
 version: "3.8"
 services:
   arangodb:
+    container_name: openskidata-processor-arangodb
     image: arangodb:3.10.6 # keep in sync with the version used in integration tests
     ports:
       - 0:8529
     environment:
       - ARANGO_NO_AUTH=1d
   tippecanoe:
+    container_name: openskidata-processor-tippecanoe
     build:
       context: https://github.com/mapbox/tippecanoe.git
     command: echo "tippecanoe loaded" # override the default command which runs the tests
     volumes:
       - ./data:/data
+  elevation-service:
+    container_name: openskidata-processor-elevation-service
+    image: racemap/elevation-service:31
+    ports:
+      - 0:3000
+    environment:
+      - TILE_SET_PATH=s3://elevation-tiles-prod/skadi
